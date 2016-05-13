@@ -4,15 +4,16 @@ import java.nio.ByteBuffer;
 import android.util.Log;
 
 /**
- * Created by Félix on 2016-04-18.
+ * Created by Félix on 2016-05-12.
  */
-public class GyroDataCapture {
+public class AcceleroDataCapture {
+
     private long timestamp;
     private float xValue;
     private float yValue;
     private float zValue;
 
-    public GyroDataCapture(float x, float y, float z, long t){
+    public AcceleroDataCapture(float x, float y, float z, long t){
         xValue = x;
         yValue = y;
         zValue = z;
@@ -20,7 +21,7 @@ public class GyroDataCapture {
     }
 
     //bytes should be of size (3*Float.SIZE + Long.SIZE) / Byte.SIZE);
-    public GyroDataCapture(byte[] bytes){
+    public AcceleroDataCapture(byte[] bytes){
         if (bytes.length != (3*Float.SIZE + Long.SIZE) / Byte.SIZE){
             Log.e("ERROR","ERROR! byte array size should be "+(3*Float.SIZE + Long.SIZE)/Byte.SIZE
                     +"but is "+bytes.length);
@@ -55,3 +56,4 @@ public class GyroDataCapture {
     }
 
 }
+
