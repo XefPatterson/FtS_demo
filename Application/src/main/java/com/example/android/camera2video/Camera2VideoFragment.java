@@ -202,6 +202,7 @@ public class Camera2VideoFragment extends Fragment
     SensorManager acclSensorManager;
     Sensor gyroSensor;
     Sensor acclSensor;
+    private boolean canShowText = false;
     float[] gravity = new float[3];
     float[] linear_accl = new float[3];
     private List<GyroDataCapture> gyroRecordingsList = new ArrayList<GyroDataCapture>();
@@ -217,11 +218,14 @@ public class Camera2VideoFragment extends Fragment
             float z = event.values[2];
             long t = event.timestamp;
             //Add a gyro capture to the list
-            gyroRecordingsList.add(new GyroDataCapture(x,y,z,t));
+            gyroRecordingsList.add(new GyroDataCapture(x, y, z, t));
+            if (canShowText)
+            {
+                textX.setText("GyroX : " + String.format("%.2f",x) + "rad/s");
+                textY.setText("GyroY : " + String.format("%.2f",y) + "rad/s");
+                textZ.setText("GyroZ : " + String.format("%.2f",z) + "rad/s");
+            }
 
-            textX.setText("GyroX : " + String.format("%.2f",x) + "rad/s");
-            textY.setText("GyroY : " + String.format("%.2f",y) + "rad/s");
-            textZ.setText("GyroZ : " + String.format("%.2f",z) + "rad/s");
         }
     };
 
@@ -234,10 +238,11 @@ public class Camera2VideoFragment extends Fragment
                     event.values[1],
                     event.values[2],
                     t));
-
-            textAcclX.setText("AcclX : " + String.format("%.2f",event.values[0]) + "m/s*s");
-            textAcclY.setText("AcclY : " + String.format("%.2f",event.values[1]) + "m/s*s");
-            textAcclZ.setText("AcclZ : " + String.format("%.2f",event.values[2]) + "m/s*s");
+            if (canShowText) {
+                textAcclX.setText("AcclX : " + String.format("%.2f", event.values[0]) + "m/s*s");
+                textAcclY.setText("AcclY : " + String.format("%.2f", event.values[1]) + "m/s*s");
+                textAcclZ.setText("AcclZ : " + String.format("%.2f", event.values[2]) + "m/s*s");
+            }
         }
     };
 
@@ -353,6 +358,14 @@ public class Camera2VideoFragment extends Fragment
         textAcclX = (TextView) view.findViewById(R.id.acclX);
         textAcclY = (TextView) view.findViewById(R.id.acclY);
         textAcclZ = (TextView) view.findViewById(R.id.acclZ);
+        if (textX == null)
+        {
+            canShowText = false;
+        }
+        else
+        {
+            canShowText = true;
+        }
     }
 
     @Override
@@ -386,9 +399,12 @@ public class Camera2VideoFragment extends Fragment
                 if (mIsRecordingVideo) {
                     stopRecordingVideo();
                     gyroSensorManager.unregisterListener(gyroListener);
-                    textX.setText("GyroX : ");
-                    textY.setText("GyroY : ");
-                    textZ.setText("GyroZ : ");
+                    if (canShowText) {
+                        textX.setText("GyroX : ");
+                        textY.setText("GyroY : ");
+                        textZ.setText("GyroZ : ");
+                    }
+
                     String name = this.getActivity().getExternalFilesDir(null)+"/bidule.rot";
                     //        new File(this.getActivity().getExternalFilesDir(null),
                     //        "bidule_sanglant.rot").getName();
@@ -492,30 +508,62 @@ public class Camera2VideoFragment extends Fragment
     }
 
     private boolean printRotations(){
-
-        File yourFile = new File(this.getActivity().getExternalFilesDir(null)+"/gyro_data.rot");
-        Log.d(TAG, "Output stream name: " + yourFile.getAbsolutePath());
+        //This changed. Now printing 5 first values of gyro and accl.
+        int limit=5;
+        File gyroFile = new File(this.getActivity().getExternalFilesDir(null)+"/gyro_data.rot");
         FileInputStream inputStream;
-        if(!yourFile.exists()) {
+        if(!gyroFile.exists()) {
             return false;
         }
         try {
-            inputStream = new FileInputStream(yourFile);
+            inputStream = new FileInputStream(gyroFile);
             int size_to_read = (3*Float.SIZE + Long.SIZE) / Byte.SIZE;
             byte[] b = new  byte[size_to_read];
 
-            while (inputStream.read(b)!= -1){
-                GyroDataCapture gyroData = new GyroDataCapture(b);
-                Log.d("GYRO", "t: "+gyroData.getTimestamp()+"GyroX: "+ gyroData.getX()
-                        +" GyroY: "+gyroData.getY()+" Gyroz: "+gyroData.getZ());
+            for (int i =0 ; i<limit ; i++)
+            {
+                int r = inputStream.read(b);
+                if (r!= -1){
+                    GyroDataCapture gyroData = new GyroDataCapture(b);
+                    Log.d("GYRO", "t: " + gyroData.getTimestamp() + "  GyroX: " + gyroData.getX()
+                            + " GyroY: " + gyroData.getY() + " Gyroz: "+gyroData.getZ());
+                }
+
             }
 
             inputStream.close();
-            return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
+
+        //Now Accelerometers:
+        File acclFile = new File(this.getActivity().getExternalFilesDir(null)+"/accl_data.rot");
+        if(!gyroFile.exists()) {
+            return false;
+        }
+        try {
+            inputStream = new FileInputStream(acclFile);
+            int size_to_read = (3*Float.SIZE + Long.SIZE) / Byte.SIZE;
+            byte[] b = new  byte[size_to_read];
+
+            for (int i =0 ; i<limit ; i++)
+            {
+                int r = inputStream.read(b);
+                if (r!= -1){
+                    GyroDataCapture gyroData = new GyroDataCapture(b);
+                    Log.d("ACCL", "t: " + gyroData.getTimestamp() + "  ACCL: " + gyroData.getX()
+                            + " ACCL: " + gyroData.getY() + " ACCL: "+gyroData.getZ());
+                }
+
+            }
+
+            inputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     /**
