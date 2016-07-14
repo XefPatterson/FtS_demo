@@ -510,7 +510,7 @@ public class Camera2VideoFragment extends Fragment
     private boolean printRotations(){
         //This changed. Now printing 5 first values of gyro and accl.
         int limit=5;
-        File gyroFile = new File(this.getActivity().getExternalFilesDir(null)+"/gyro_data.rot");
+        File gyroFile = new File(this.getActivity().getExternalFilesDir(null)+"/Demo_video_gyro_accl/gyro_data.rot");
         FileInputStream inputStream;
         if(!gyroFile.exists()) {
             return false;
@@ -520,16 +520,20 @@ public class Camera2VideoFragment extends Fragment
             int size_to_read = (3*Float.SIZE + Long.SIZE) / Byte.SIZE;
             byte[] b = new  byte[size_to_read];
 
-            for (int i =0 ; i<limit ; i++)
+            int i = 0;
+            int r = inputStream.read(b);
+            while (r != -1)
             {
-                int r = inputStream.read(b);
-                if (r!= -1){
+                if (r!= -1 && i<=limit){
                     GyroDataCapture gyroData = new GyroDataCapture(b);
                     Log.d("GYRO", "t: " + gyroData.getTimestamp() + "  GyroX: " + gyroData.getX()
                             + " GyroY: " + gyroData.getY() + " Gyroz: "+gyroData.getZ());
                 }
-
+                r = inputStream.read(b);
+                i++;
             }
+
+            Log.d("GYRO", "nb de captures:" + i);
 
             inputStream.close();
         } catch (Exception e) {
